@@ -124,7 +124,7 @@ void initialize_inputs() {
 void print_inputs() {
   int row, col;
 
-  if (N < 10) {
+  if (N <= 10) {
     printf("\nA =\n\t");
     for (row = 0; row < N; row++) {
       for (col = 0; col < N; col++) {
@@ -141,7 +141,7 @@ void print_inputs() {
 void print_X() {
   int row;
 
-  if (N < 10) {
+  if (N <= 10) {
     printf("\nX = [");
     for (row = 0; row < N; row++) {
       printf("%5.2f%s", X[row], (row < N-1) ? "; " : "]\n");
@@ -235,14 +235,15 @@ void gauss() {
       B[row] -= B[norm] * multiplier;
     }
   }
+  
   /* (Diagonal elements are not normalized to 1.  This is treated in back
    * substitution.)
    */
 
 
   /* Back substitution */
-  #pragma omp parallel for default (none) shared (A, B, X, N) private (row, col )\
-                           num_threads(procs) schedule (static)
+  //#pragma omp parallel for default (none) shared (A, B, X, N) private (row, col)\
+                         num_threads(procs) schedule (static)
   for (row = N - 1; row >= 0; row--) {
     X[row] = B[row];
     for (col = N-1; col > row; col--) {
