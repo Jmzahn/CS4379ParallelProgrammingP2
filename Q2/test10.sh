@@ -1,4 +1,5 @@
 #!/bin/bash
+echo -e "\nFor seeing values of input/output\n"
 echo -e "\nTest with N: 2 procs: 1\n"
 ./guass 2 1 > ./test10/guass_2_1_out
 echo -e "\nTest with N: 2 procs: 2\n"
