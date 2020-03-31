@@ -7,6 +7,7 @@
  */
 
 /* Demostration code - Gaussian elimination without pivoting.
+    Modified by: Jacob Zahn
  */
 
 #include <unistd.h>
