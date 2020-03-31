@@ -8,9 +8,9 @@ Starting clock.
 Computing parallelly.
 Stopped clock.
 
-Elapsed time = 451.353 ms.
+Elapsed time = 458.333 ms.
 (CPU times are accurate to the nearest 0.001 ms)
-My total CPU time for parent = 0.192 ms.
-My system CPU time for parent = 0.002 ms.
+My total CPU time for parent = 0.188 ms.
+My system CPU time for parent = 0 ms.
 My total CPU time for child processes = 0 ms.
 --------------------------------------------

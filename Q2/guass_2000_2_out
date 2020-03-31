@@ -1,5 +1,5 @@
 
-Matrix dimension N = 1000.
+Matrix dimension N = 2000.
 Number of processors = 2.
 
 Initializing...
@@ -8,9 +8,9 @@ Starting clock.
 Computing parallelly.
 Stopped clock.
 
-Elapsed time = 1798.99 ms.
+Elapsed time = 13975.9 ms.
 (CPU times are accurate to the nearest 0.001 ms)
-My total CPU time for parent = 0.192 ms.
+My total CPU time for parent = 1.581 ms.
 My system CPU time for parent = 0 ms.
 My total CPU time for child processes = 0 ms.
 --------------------------------------------

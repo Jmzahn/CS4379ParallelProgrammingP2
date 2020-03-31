@@ -1,0 +1,26 @@
+
+Matrix dimension N = 4.
+Number of processors = 1.
+
+Initializing...
+
+A =
+	28174.89, 62908.02, 6271.76, 25532.68;
+	10205.14, 63769.17, 10843.69, 56643.07;
+	2748.92, 27302.84, 40224.47, 62613.88;
+	15259.75, 24413.07, 49039.15, 33751.78;
+	
+B = [26354.38; 45212.61; 53998.61; 60191.86]
+
+Starting clock.
+Computing parallelly.
+Stopped clock.
+
+X = [-1.58;  1.20;  1.50; -0.56]
+
+Elapsed time = 0.03 ms.
+(CPU times are accurate to the nearest 0.001 ms)
+My total CPU time for parent = 0 ms.
+My system CPU time for parent = 0 ms.
+My total CPU time for child processes = 0 ms.
+--------------------------------------------
