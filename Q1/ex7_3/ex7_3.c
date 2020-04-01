@@ -41,31 +41,26 @@ int main(int argc, char *argv[]){
         numP = conv;
         pthread_t finders[numP];
         void* list_ptrs[numP];
-        double remainder = 10000000%numP;
+        double remainder = 100000000%numP;
         if(remainder!=0.0){
             return(-1);
         }
-        int randArray[10000000];
+        int* randArray = (int*) malloc(100000000 * sizeof(int));
         srand(time(NULL));
-        for(int i = 0; i < 10000000; i++){
-            randArray[i] = rand();
+        for(int i = 0; i < 100000000; i++){
+            randArray[i] = (int)rand() / 32768;
         }
         
-        int split = 10000000/numP;
+        int split = 100000000/numP;
         partial_list_size = split;
-        int** A = (int**)malloc(sizeof(int*)*numP);
-        for(int i = 0; i < numP; i++){
-            A[i] = &randArray[i*partial_list_size];
-        }
         
-
         /* Start Clock */
         printf("\nStarting clock.\n");
         gettimeofday(&etstart, &tzdummy);
         etstart2 = times(&cputstart);
         
         for(int i = 0; i < numP; i++){
-            list_ptrs[i] = A[i];
+            list_ptrs[i] = &randArray[i*split];
             pthread_create(&finders[i],NULL,find_min,list_ptrs[i]);
         }
         for(int i = 0; i < numP; i++){
@@ -96,8 +91,7 @@ int main(int argc, char *argv[]){
         	 (float)CLOCKS_PER_SEC * 1000);
             /* Contrary to the man pages, this appears not to include the parent */
         printf("--------------------------------------------\n");
-        free( A[0] );
-        free( A );
+        free(randArray);
     }
     
     return 0;
