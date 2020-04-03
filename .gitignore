@@ -105,3 +105,5 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.gitignore.io/api/c,code,linux,windows
+.vscode/launch.json
+.vscode/tasks.json
