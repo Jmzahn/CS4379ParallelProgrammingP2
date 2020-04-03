@@ -1,5 +1,5 @@
 CC = gcc
-LIB = -fopenmp
+LIB = -pthread
 
 prog: guass.c
 	$(CC) $(LIB) guass.c -o guass

@@ -1,15 +1,7 @@
-/* This file is only for reference. It cannot be compiled successfully, 
- * because m_set_procs(), m_get_numprocs() is not supported. Please 
- * write your own parallel version (Pthread, OpenMP, or MPI verion). For 
- * instance, you should use pthread_create() and pthread_join() to 
- * write a Pthread version, and use MPI initilization and communication
- * functions to write a MPI version.
- */
-
 /* Demostration code - Gaussian elimination without pivoting.
     Modified by: Jacob Zahn
  */
-
+#define _XOPEN_SOURCE 600
 #include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -19,32 +11,39 @@
 #include <sys/time.h>
 #include <time.h>
 #include <limits.h>
-#include <omp.h>
+#include <pthread.h>
+#include <string.h>
 
 /* Program Parameters */
 #define MAXN 2000  /* Max value of N */
 int N;  /* Matrix size */
-int procs;  /* Number of processors to use */
+int threads;  /* Number of processors to use */
 
 /* Matrices and vectors */
-volatile float A[MAXN][MAXN], B[MAXN], X[MAXN];
+volatile double A[MAXN][MAXN], B[MAXN], X[MAXN];
+volatile double L[MAXN][MAXN];
 /* A * X = B, solve for X */
 
+pthread_barrier_t   barrier; // the barrier synchronization object
 
 /* Prototype */
-int m_get_numprocs();
-
 void gauss();  /* The function you will provide.
 		* It is this routine that is timed.
 		* It is called only on the parent.
 		*/
 
+struct arg_struct {
+    int normStart;
+    int normStride;
+};
+
+void *LUcolWise(void *args);
+
 /* returns a seed for srand based on the time */
 unsigned int time_seed() {
   struct timeval t;
-  struct timezone tzdummy;
 
-  gettimeofday(&t, &tzdummy);
+  gettimeofday(&t, NULL);
   return (unsigned int)(t.tv_usec);
 }
 
@@ -61,7 +60,7 @@ void parameters(int argc, char **argv) {
       /* Use submission parameters */
       submit = 1;
       N = 4;
-      procs = 2;
+      threads = 2;
       printf("\nSubmission run for \"%s\".\n", getlogin());
     }
     else {
@@ -71,7 +70,7 @@ void parameters(int argc, char **argv) {
 	      printf("Random seed = %i\n", seed);
       }
       else {
-	      printf("Usage: %s <matrix_dimension> <num_procs> [random seed]\n",
+	      printf("Usage: %s <matrix_dimension> <num_threads> [random seed]\n",
 	       argv[0]);
 	      printf("       %s submit\n", argv[0]);
 	      exit(0);
@@ -85,24 +84,17 @@ void parameters(int argc, char **argv) {
       printf("N = %i is out of range.\n", N);
       exit(0);
     }
-    procs = atoi(argv[2]);
-    if (procs < 1) {
-      printf("Warning: Invalid number of processors = %i.  Using 1.\n", procs);
-      procs = 1;
+    threads = atoi(argv[2]);
+    if (threads < 1) {
+      printf("Warning: Invalid number of processors = %i.  Using 1.\n", threads);
+      threads = 1;
     }
-    if (procs > m_get_numprocs()) {
-      printf("Warning: %i processors requested; only %i available.\n",
-	    procs, m_get_numprocs());
-      procs = m_get_numprocs();
-    }
+    
   }
 
   /* Print parameters */
   printf("\nMatrix dimension N = %i.\n", N);
-  printf("Number of processors = %i.\n", procs);
-
-  /* Set number of processors */
-  //done before the for loop
+  printf("Number of threads = %i.\n", threads);
 }
 
 /* Initialize A and B (and X to 0.0s) */
@@ -152,7 +144,6 @@ void print_X() {
 void main(int argc, char **argv) {
   /* Timing variables */
   struct timeval etstart, etstop;  /* Elapsed times using gettimeofday() */
-  struct timezone tzdummy;
   clock_t etstart2, etstop2;  /* Elapsed times using times() */
   unsigned long long usecstart, usecstop;
   struct tms cputstart, cputstop;  /* CPU times for my processes */
@@ -168,14 +159,14 @@ void main(int argc, char **argv) {
 
   /* Start Clock */
   printf("\nStarting clock.\n");
-  gettimeofday(&etstart, &tzdummy);
+  gettimeofday(&etstart, NULL);
   etstart2 = times(&cputstart);
 
   /* Gaussian Elimination */
   gauss();
 
   /* Stop Clock */
-  gettimeofday(&etstop, &tzdummy);
+  gettimeofday(&etstop, NULL);
   etstop2 = times(&cputstop);
   printf("Stopped clock.\n");
   usecstart = (unsigned long long)etstart.tv_sec * 1000000 + etstart.tv_usec;
@@ -211,22 +202,54 @@ void main(int argc, char **argv) {
 /* ------------------ Above Was Provided --------------------- */
 
 /****** You will replace this routine with your own parallel version *******/
-/* Provided global variables are MAXN, N, procs, A[][], B[], and X[],
+/* Provided global variables are MAXN, N, threads, A[][], B[], and X[],
  * defined in the beginning of this code.  X[] is initialized to zeros.
  */
-int m_get_numprocs(){return omp_get_max_threads();}
-
 void gauss() {
-  int norm, row, col;  /* Normalization row, and zeroing
+  int row, col;  /* Normalization row, and zeroing
 			* element row and col */
-  float multiplier;
+  
 
-  printf("Computing parallelly.\n");
+  //create array of args
+  struct arg_struct *argArray[threads];
+  
+  //create pthread_t array
+  pthread_t blocks[threads];
 
-  #pragma omp parallel for default (none) shared (A, B, N) private (norm, row, col, multiplier) \
-                           num_threads(procs) schedule (static)
-  /* Gaussian elimination */
+  //initialize barrier
+  pthread_barrier_init(&barrier, NULL, threads);
+
+  if(threads!=1){
+    printf("Computing parallelly.\n");
+  }
+  else{
+    printf("Computing serially.\n");
+  }
+  //create threads
+  
+  for(int i = 0; i < threads; i ++){
+    argArray[i] = (struct arg_struct *)malloc(sizeof(struct arg_struct));
+    argArray[i]->normStart = i;
+    argArray[i]->normStride = threads;
+    pthread_create(&blocks[i], NULL, &LUcolWise, (void *)argArray[i]);
+    
+  }
+  
+  //join threads
+  for(int i = 0; i < threads; i ++){
+    pthread_join(blocks[i], NULL);
+  }
+
+  //complete calculation
+
+  //free memory
+  for(int i = 0; i < threads; i ++){
+    free( argArray[i] );
+  }
+  
+  /* Gaussian elimination 
   for (norm = 0; norm < N - 1; norm++) {
+
     for (row = norm + 1; row < N; row++) {
       multiplier = A[row][norm] / A[norm][norm];
       for (col = norm; col < N; col++) {
@@ -234,7 +257,7 @@ void gauss() {
       }
       B[row] -= B[norm] * multiplier;
     }
-  }
+  }*/
   
   /* (Diagonal elements are not normalized to 1.  This is treated in back
    * substitution.)
@@ -242,13 +265,46 @@ void gauss() {
 
 
   /* Back substitution */
-  //#pragma omp parallel for default (none) shared (A, B, X, N) private (row, col)\
-                         num_threads(procs) schedule (static)
-  for (row = N - 1; row >= 0; row--) {
+
+  //at this point U is stored in A
+
+  //from the last row to the first
+  for(row = N-1; row >= 0; row--) {
+    //set X[row] to the multiplier of that row : B[row]
     X[row] = B[row];
-    for (col = N-1; col > row; col--) {
+    //for every col such that row<col<N
+    for(col = row+1; col < N; col++) {
+      //update X[row] via elimination 
       X[row] -= A[row][col] * X[col];
     }
+    //finally update X[row] by dividing by U[row][row]
     X[row] /= A[row][row];
+  }
+  
+}
+
+void *LUcolWise(void* args){
+  //interpret args
+  int normStart = ((struct arg_struct*)args)->normStart;
+  int normStride = ((struct arg_struct*)args)->normStride;
+  
+  //for every col thread is assigned
+  for(int k = normStart; k < N; k+=normStride){
+    //for every row k+1->N
+    for(int i = k+1; i < N; i++){
+      //store values of L 
+      L[i][k] = A[i][k] / A[k][k];
+      //calculate multipliers for ith eqn
+      B[i] -= L[i][k]*B[k];
+    }
+    //making sure to traverse col wise for even load balancing
+    for(int i = k+1; i < N; i++){
+      for(int j = k+1; j < N; j++){
+        //update submatrix via elimination
+        A[i][j] -=  L[i][k] * A[k][j];
+      }
+    }
+    //barrier for synchronizing matrix update of threads
+    pthread_barrier_wait(&barrier);
   }
 }
