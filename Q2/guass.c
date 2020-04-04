@@ -225,14 +225,13 @@ void gauss() {
   else{
     printf("Computing serially.\n");
   }
+
   //create threads
-  
   for(int i = 0; i < threads; i ++){
     argArray[i] = (struct arg_struct *)malloc(sizeof(struct arg_struct));
     argArray[i]->normStart = i;
     argArray[i]->normStride = threads;
     pthread_create(&blocks[i], NULL, &LUcolWise, (void *)argArray[i]);
-    
   }
   
   //join threads
