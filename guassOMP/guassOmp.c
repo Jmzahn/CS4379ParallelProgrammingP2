@@ -19,6 +19,7 @@
 #include <sys/time.h>
 #include <time.h>
 #include <limits.h>
+#include <string.h>
 #include <omp.h>
 
 /* Program Parameters */
@@ -42,9 +43,8 @@ void gauss();  /* The function you will provide.
 /* returns a seed for srand based on the time */
 unsigned int time_seed() {
   struct timeval t;
-  struct timezone tzdummy;
 
-  gettimeofday(&t, &tzdummy);
+  gettimeofday(&t, NULL);
   return (unsigned int)(t.tv_usec);
 }
 
@@ -152,7 +152,6 @@ void print_X() {
 void main(int argc, char **argv) {
   /* Timing variables */
   struct timeval etstart, etstop;  /* Elapsed times using gettimeofday() */
-  struct timezone tzdummy;
   clock_t etstart2, etstop2;  /* Elapsed times using times() */
   unsigned long long usecstart, usecstop;
   struct tms cputstart, cputstop;  /* CPU times for my processes */
@@ -168,14 +167,14 @@ void main(int argc, char **argv) {
 
   /* Start Clock */
   printf("\nStarting clock.\n");
-  gettimeofday(&etstart, &tzdummy);
+  gettimeofday(&etstart, NULL);
   etstart2 = times(&cputstart);
 
   /* Gaussian Elimination */
   gauss();
 
   /* Stop Clock */
-  gettimeofday(&etstop, &tzdummy);
+  gettimeofday(&etstop, NULL);
   etstop2 = times(&cputstop);
   printf("Stopped clock.\n");
   usecstart = (unsigned long long)etstart.tv_sec * 1000000 + etstart.tv_usec;
