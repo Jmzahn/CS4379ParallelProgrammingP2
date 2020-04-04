@@ -1,0 +1,16 @@
+
+Matrix dimension N = 1984.
+Number of processors = 1.
+
+Initializing...
+
+Starting clock.
+Computing parallelly.
+Stopped clock.
+
+Elapsed time = 16660 ms.
+(CPU times are accurate to the nearest 0.001 ms)
+My total CPU time for parent = 1.665 ms.
+My system CPU time for parent = 0 ms.
+My total CPU time for child processes = 0 ms.
+--------------------------------------------
