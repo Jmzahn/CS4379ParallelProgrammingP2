@@ -1,11 +1,11 @@
 CC = gcc
 LIB = -pthread
 
-prog: guass.c
-	$(CC) $(LIB) guass.c -o guass
+prog: gauss.c
+	$(CC) $(LIB) gauss.c -o gauss
 
 
-all: guass
+all: gauss
 
 clean:
 	rm -f *.exe *.o
